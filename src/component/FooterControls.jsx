@@ -35,9 +35,17 @@ export default function FooterControls(props) {
           <i className="fa-solid fa-video-slash"></i>
         )}
       </button>
-      <button className="meeting-icons control-button">
+      <button className={` ${
+          props.screenShareStatus 
+            ? 
+            "meeting-icons control-button-slash":
+            "meeting-icons control-button"
+        }`}
+        onClick={(e) => {
+          props.setScreenShareStatus((previousStatus) => !previousStatus);
+        }}>
         <i className="fa-solid fa-display"></i>
       </button>
     </div>
-  );
+  )
 }

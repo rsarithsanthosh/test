@@ -64,5 +64,18 @@
     background: red;
 }
 
+.video-pin{
 
+    position: absolute;
+    z-index: 1;
+    background-color:transparent;
+    color: black;
+    border: none;
+    border-radius: 50px;
+    height: 20px;
+    width:30px;
+    right:2vw;
+    top:2vh;
+
+}
 

@@ -57,6 +57,9 @@ export default function MeetingPage() {
   const [userId, setUserId] = useState();
   const [publishStreamId, setPublishStreamId] = useState();
   const [publishStream, setPublishStream] = useState();
+  const [publishScreenShare, setPublishScreenShare] = useState();
+  const [screenShareStatus, setScreenShareStatus] = useState(false);
+  const [currentPin, setCurrentPin] = useState();
   const refLayout = useRef(null);
 
   // open tok layout container
@@ -113,12 +116,21 @@ export default function MeetingPage() {
     if (result) {
       result.result.streams.forEach(async (stream) => {
         let subscription = await twyng.subscribe(stream);
+        if (
+          subscription.streamInfo.mediaSource.videoSourceInfo.name === "screen"
+        ) {
+          setCurrentPin(subscription.streamId);
+        }
         setStreams((ps) => [
           ...ps,
           {
             ...subscription,
           },
         ]);
+        let flag = null;
+        flag = setTimeout(() => {
+          refLayout.current();
+        }, "300");
       });
 
       const localstream = await twyng.createMediastream({
@@ -138,6 +150,10 @@ export default function MeetingPage() {
       setPublishStreamId(publish.conference.userId);
     }
   };
+  let flag = null;
+  flag = setTimeout(() => {
+    refLayout.current();
+  }, "300");
 
   useEffect(() => {
     twyngJoin();
@@ -148,7 +164,15 @@ export default function MeetingPage() {
     // console.log("data for subscription", data.data);
     if (data.data) {
       let subscription = await twyng.subscribe(data.data);
-      // console.log("subscirbed data", subscription);
+      console.log("subscirbed data", subscription);
+
+      if (
+        subscription.streamInfo.mediaSource.videoSourceInfo.name === "screen"
+      ) {
+        setCurrentPin(subscription.streamId);
+      }
+      // setCurrentPin(id)
+
       setStreams((ps) => [
         ...ps,
         {
@@ -157,6 +181,26 @@ export default function MeetingPage() {
       ]);
     }
   };
+
+  //handle Screen Share
+  let handleScreenShareClick = async () => {
+    if (screenShareStatus === true) {
+      const localstream = await twyng.createMediastream({ video: "screen" });
+      let publishScreenShare = await twyng.publish(localstream);
+      setPublishScreenShare(publishScreenShare);
+      console.log("Screen Share Published successfully", publishScreenShare);
+    }
+  };
+  if (screenShareStatus === false) {
+    if (publishScreenShare) {
+
+      publishScreenShare.stop();
+    }
+  }
+  useEffect(() => {
+    handleScreenShareClick();
+  }, [screenShareStatus]);
+
   useEffect(() => {
     twyng.addEventListener("new-publisher", handlesubscirbe);
     return () => {
@@ -176,8 +220,8 @@ export default function MeetingPage() {
         return ps.map((stream) => {
           console.log(stream.streamId, data.data.id, "stream id check");
           if (stream.streamId === data.data.id) {
-            console.log(stream.streamId,"check update stream");
-            return stream
+            console.log(stream.streamId, "check update stream");
+            return { ...stream, video: data.data.video };
           } else {
             return stream;
           }
@@ -248,7 +292,14 @@ export default function MeetingPage() {
         {streams.length > 0 &&
           streams.map((stream) => {
             if (stream) {
-              return <Streams stream={stream} key={stream.streamId} />;
+              return (
+                <Streams
+                  currentPin={currentPin}
+                  setCurrentPin={setCurrentPin}
+                  stream={stream}
+                  key={stream.streamId}
+                />
+              );
             }
           })}
       </div>
@@ -260,6 +311,8 @@ export default function MeetingPage() {
         setVideoStatus={setVideoStatus}
         videoStatus={videoStatus}
         audioStatus={audioStatus}
+        screenShareStatus={screenShareStatus}
+        setScreenShareStatus={setScreenShareStatus}
       />
     </div>
   );
